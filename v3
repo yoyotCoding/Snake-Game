@@ -97,24 +97,21 @@ void sleep(float secs) {
 
 void startGame()
 {
-	//int* delay;
-	printBorders();
+	//int* delay; //replace all global variables with *variables
+	
+	printBorders(); //creates board
+	
 	ListNode* head = createNewNode(0, NULL);
 	head->data = COLS / 2;
 
-	for (int i = 0; i < 100; i++)
+	while (!((snakeDirection == 'd' || snakeDirection == 'a') && (head->data == COLS || head->data == 0)) || ((snakeDirection == 'w' || snakeDirection == 's') && (head->data == ROWS || head->data == 0))) //**need to change it later//if head of snake is equal to border or itself then free list, and end game
 	{
 		moveSnake(snakeDirection, head);
-		
-
-		if (((snakeDirection=='d' || snakeDirection == 'a') && (head->data == COLS || head->data == 0)) || ((snakeDirection == 'w' || snakeDirection == 's') && (head->data == ROWS || head->data == 0)))//**need to change it later//if head of snake is equal to border or itself then free list, and end game
-		{
-			freeList(head->data);
-			gameOver();
-			return;
-		}
-
 	}
+	
+	freeList(head);
+	gameOver();
+	return;
 }
 
 void moveSnake(char snakeDirection, ListNode* head)
