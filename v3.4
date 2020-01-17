@@ -1,0 +1,303 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdbool.h>
+
+typedef struct listNode {
+	int data;
+	struct listNode* next;
+}ListNode;
+
+#define ROWS 25
+#define COLS 75
+char board[ROWS][COLS];
+float delay = .5;//change later to 1!!!
+int moveCount = 1;
+//int col = COLS/2;
+//int row = ROWS/2;
+int snakeLength = 1;
+char snakeDirection = 'd';
+char previousSnakeDirection = ' ';
+
+// terminal escape codes/ANSI escape codes (or ANSI escape sequences)
+// "\x1B" is the escape character that tells your terminal that what comes next is not meant to be printed on the screen, 
+// but rather a command to the terminal (or most likely terminal emulatoion).
+
+// Turn escape codes ON.
+void init(void);
+
+// Moves the cursor to position (x,y) on screen.
+// Parameters:
+//     x: the row of the posiiton.
+//     y: the column of the posiiton.
+void gotoxy(int x, int y);
+
+// Delays the execution of the program.
+// Parameters:
+//     secs: the length of the delay in seconds. 
+void sleep(float secs);
+
+void runGame();
+
+void printBorders();
+
+void moveSnake(ListNode* col, ListNode* row);
+
+void gameOver();
+
+char checkSnakeDirection(ListNode* col, ListNode* row);
+
+bool checkBorderCrash(ListNode* col, ListNode* row);
+
+bool checkSelfCrash();
+
+void erasePreviousSpot(ListNode* col, ListNode* row);
+
+ListNode* removeNodeTail(ListNode* head);
+
+ListNode* createNewNode(int data, ListNode* next);
+void insertNodeToTail(ListNode* head, ListNode* newTail);
+ListNode* insertNodeToHead(ListNode* head, ListNode* newHead);
+void freeList(ListNode* head);
+
+int main() {
+	init();
+	runGame();
+
+}
+
+// Turn escape codes ON.
+void init(void) {
+	system("cls");
+}
+
+// Moves the cursor to position (x,y) on screen.
+// Parameters:
+//     x: the row of the posiiton.
+//     y: the column of the posiiton.
+void gotoxy(int x, int y) {
+	printf("\x1b[%d;%df", x, y);
+}
+
+// Delays the execution of the program.
+// Parameters:
+//     secs: the length of the delay in seconds. 
+void sleep(float secs) {
+	clock_t clocks_start = clock();
+
+	while (clock() - clocks_start < secs*CLOCKS_PER_SEC)
+		;
+}
+
+void runGame()
+{
+	printBorders(); //creates board
+
+	ListNode* col = createNewNode(COLS / 2 , NULL);
+	ListNode* row = createNewNode(ROWS / 2, NULL);
+
+	//**need to change it later//if head of snake is equal to border or itself then free list, and end game
+	while ( checkBorderCrash(col, row) || checkSelfCrash() )
+	{
+		moveSnake(col, row);
+		checkSnakeDirection(col,row);
+		//printf("Snake Dir is %d\n", col);
+	}
+	freeList(col);
+	freeList(row);
+	gameOver();
+
+	return;
+}
+
+void moveSnake(ListNode* col, ListNode* row)
+{
+	/*printf("row is %d\ncol is %d",col->data,row->data);
+	scanf("%c", &previousSnakeDirection);*/
+	gotoxy(row->data, col->data);
+	printf("@"); // extend front of snake
+
+	erasePreviousSpot(col, row);
+
+	sleep(delay);
+
+	//while (head != NULL)
+	//{
+	//	gotoxy((ROWS / 2), head->data);
+	//	printf("@"); // extend front of snake
+	//}
+
+
+	if (moveCount % 5 == 0 || delay > 0.1) //enance speed until delay between snake movements is .1s
+	{
+		if (delay > 0.1)
+			delay -= .03;
+		snakeLength++;
+	}
+	if (moveCount % 5 != 0)
+	{
+		insertNodeToTail(col, createNewNode(previousSnakeDirection, NULL));
+	}
+		
+	moveCount++;
+	//head->data++;
+
+	return;
+}
+
+void erasePreviousSpot(ListNode* col, ListNode* row)
+{
+	switch (snakeDirection)
+	{
+	case 'd':
+		gotoxy(row->data, col->data - 1);
+		printf(" ");
+		gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+		break;
+	case 'w':
+		gotoxy(row->data + 1, col->data);
+		printf(" ");
+		gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+		break;
+	case 'a':
+		gotoxy(row->data, col->data + 1);
+		printf(" ");
+		gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+		break;
+	case 's':
+		gotoxy(row->data - 1, col->data);
+		printf(" ");
+		gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+		break;
+	}
+}
+
+void printBorders()
+{
+	for (int i = 0; i < ROWS; i++)
+	{
+		printf("#");
+		for (int j = 1; j < COLS; j++)
+		{
+			if (i == 0 || i == ROWS - 1)
+				printf("#");
+			else
+			{
+				if (j < COLS - 1)
+					printf(" ");
+				else
+					printf("#");
+			}
+		}
+		printf("\n");
+
+	}
+
+	return;
+}
+
+ListNode* removeNodeTail(ListNode* head)
+{
+
+	ListNode* newHead = head;
+	ListNode* curr = head;
+	ListNode* prev = NULL;
+	ListNode* next;
+
+
+	prev->next = curr->next;
+	free(curr);
+	curr = prev->next;
+
+	return newHead;
+
+}
+
+void insertNodeToTail(ListNode* head, ListNode* newTail)
+{
+	ListNode* current = head;
+
+	while (current->next != NULL)
+	{
+		current = current->next;
+	}
+	current->next = newTail;
+}
+
+ListNode* insertNodeToHead(ListNode* head, ListNode* newHead)
+{
+	newHead->next = head;
+	return newHead;
+}
+
+ListNode* createNewNode(int data, ListNode* next)
+{
+	ListNode* node = (ListNode*)malloc(sizeof(ListNode));
+
+	node->data = data;
+	node->next = next;
+
+	return node;
+}
+
+void freeList(ListNode* head)
+{
+	ListNode* next;
+
+	while (head != NULL)
+	{
+		next = head->next;
+		free(head);
+		head = next;
+	}
+}
+
+void gameOver()
+{
+	init();
+	printBorders();
+	gotoxy(ROWS / 2, COLS / 2 - 5);
+	printf("GAME OVER"); // extend front of snake
+	gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+	return;
+}
+
+char checkSnakeDirection(ListNode* col, ListNode* row)
+{
+	if (_kbhit())
+		snakeDirection = _getch();
+	switch (snakeDirection)
+	{
+	case 'd':
+		col->data++;
+		break;
+	case 'w':
+		row->data--;
+		break;
+	case 'a':
+		col->data--;
+		break;
+	case 's':
+		row->data++;
+		break;
+	default:
+		break;
+	}
+}
+
+bool checkBorderCrash(ListNode* col, ListNode* row)
+{
+	//printf("col is: %d\nrow is: %d\n", col, row);
+	//scanf("%d", &snakeDirection);
+	if (col->data == 0 || col->data == COLS || row->data == 0 || row->data == ROWS)
+		return false;
+	else
+		return true;
+}
+
+bool checkSelfCrash()
+{
+	return false;
+}
