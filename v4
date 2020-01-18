@@ -1,0 +1,248 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdbool.h>
+
+typedef struct listNode {
+	int x;
+	int y;
+	struct listNode* next;
+}ListNode;
+
+#define ROWS 25
+#define COLS 75
+char board[ROWS][COLS];
+float delay = .3; //change later to 1!!!
+int moveCount = 1;
+char snakeDirection = 'd';
+char previousSnakeDirection = ' ';
+bool selfCrash = false;
+
+// terminal escape codes/ANSI escape codes (or ANSI escape sequences)
+// "\x1B" is the escape character that tells your terminal that what comes next is not meant to be printed on the screen, 
+// but rather a command to the terminal (or most likely terminal emulatoion).
+
+// Turn escape codes ON.
+void init(void);
+
+// Moves the cursor to position (x,y) on screen.
+// Parameters:
+//     x: the row of the posiiton.
+//     y: the column of the posiiton.
+void gotoxy(int x, int y);
+
+// Delays the execution of the program.
+// Parameters:
+//     secs: the length of the delay in seconds. 
+void sleep(float secs);
+
+void runGame();
+void moveSnake(ListNode* snake);
+void updateSnakeDirection(ListNode* snake);
+void printBorders();
+void gameOver();
+
+bool checkBorderCrash(ListNode* snake);
+
+ListNode* createNewNode(int x, int y, ListNode* next);
+void insertNodeToTail(ListNode* head, ListNode* newTail);
+void freeList(ListNode* head);
+
+int main() {
+
+	init();
+	runGame();
+
+}
+
+// Turn escape codes ON.
+void init(void) {
+	system("cls");
+}
+
+// Moves the cursor to position (x,y) on screen.
+// Parameters:
+//     x: the row of the posiiton.
+//     y: the column of the posiiton.
+void gotoxy(int x, int y) {
+	printf("\x1b[%d;%df", x, y);
+}
+
+// Delays the execution of the program.
+// Parameters:
+//     secs: the length of the delay in seconds. 
+void sleep(float secs) {
+	clock_t clocks_start = clock();
+
+	while (clock() - clocks_start < secs*CLOCKS_PER_SEC)
+		;
+}
+
+//**Runs game**//
+void runGame()
+{
+	printBorders(); //creates board
+
+	ListNode* snake = createNewNode(ROWS / 2 , COLS / 2,  NULL);
+
+	while ( checkBorderCrash(snake) || selfCrash ) //as long as head of snake hasn't crashed into itself or one of the borders, keep going
+	{
+		moveSnake(snake);
+		updateSnakeDirection(snake);
+	}
+	freeList(snake); // clear items from two lists
+	gameOver(); // announce game over
+
+	return;
+}
+
+//**Moves the snake one spot forward and waits a moment**//
+void moveSnake(ListNode* snake)
+{
+	ListNode* currSnake = snake;
+
+	while (currSnake != NULL) //as long as you haven't reached the last listNode, print '@'s in the (row,col) locations of the list
+	{
+		gotoxy(currSnake->y, currSnake->x);
+		printf("@");
+		
+		currSnake = currSnake->next; //advance to next snake-listNode
+
+		if (snake == currSnake) //ends the game if snake crashes into itself
+			selfCrash = true;
+	}
+
+	gotoxy(ROWS + 1, 0); //moves pointer off the board so movement of snake seems fluid
+	sleep(delay); // delay between movements
+	
+	if (moveCount % 5 == 0 && delay > 0.1) //enance speed until delay between snake movements is .1 seconds
+	{
+		if (delay > 0.1)
+			delay -= .03;
+		//createNewNode(currSnake->x, currSnake->y, snake);
+		////insertNodeToTail(snake, createNewNode(currSnake->x, currSnake->y, NULL));
+	}
+	else
+	{
+		gotoxy(snake->y, snake->x);
+		printf(" "); //prints a space in the place where the tail has just left
+	}
+
+	moveCount++;
+
+	return;
+}
+
+//**waits for input and changes location of the head of the snake accordingly**//
+void updateSnakeDirection(ListNode* snake)
+{
+
+	if (_kbhit()) //waits for keyboard input
+		snakeDirection = _getch();
+
+	if (snakeDirection != 'd' && snakeDirection != 'a' && snakeDirection != 'w' && snakeDirection != 's')
+		snakeDirection = previousSnakeDirection; //ignore inputs that aren't 'w','a','s','d'
+
+	if (moveCount >= 5 && 
+		( (snakeDirection == 'd' && previousSnakeDirection == 'a') 
+		|| (snakeDirection == 'a' && previousSnakeDirection == 'd')
+		|| (snakeDirection == 'w' && previousSnakeDirection == 's') 
+		|| (snakeDirection == 's' && previousSnakeDirection =='w') ) )
+
+		snakeDirection = previousSnakeDirection; //once snake is longer than one '@' make sure it doesn't go in reverse and run over itself
+
+	switch (snakeDirection)
+	{
+	case 'd': snake->x ++;
+		break;
+	case 'w': snake->y--;
+		break;
+	case 'a': snake->x--;
+		break;
+	case 's': snake->y++;
+		break;
+	}
+	previousSnakeDirection = snakeDirection;
+}
+
+//**prints the walls of the board**//
+void printBorders()
+{
+	for (int i = 0; i < ROWS; i++)
+	{
+		printf("#");
+		for (int j = 1; j < COLS; j++)
+		{
+			if (i == 0 || i == ROWS - 1)
+				printf("#");
+			else
+			{
+				if (j < COLS - 1)
+					printf(" ");
+				else
+					printf("#");
+			}
+		}
+		printf("\n");
+	}
+
+	return;
+}
+
+//**checks to see if the snake has crashed into one of the four walls**//
+bool checkBorderCrash(ListNode* snake)
+{
+	if (snake->x == 0 || snake->x == COLS || snake->y == 0 || snake->y == ROWS)
+		return false;
+	else
+		return true;
+}
+
+//**clears board, prints walls, types "game over" and returns**//
+void gameOver()
+{
+	init();
+	printBorders();
+	gotoxy(ROWS / 2, COLS / 2 - 5);
+	printf("GAME OVER"); // extend front of snake
+	gotoxy(ROWS + 1, 0); //move pointer off the board so movement seems fluid
+	return;
+}
+
+
+
+void insertNodeToTail(ListNode* head, ListNode* newTail)
+{
+	ListNode* current = head;
+
+	while (current->next != NULL)
+	{
+		current = current->next;
+	}
+	current->next = newTail;
+}
+
+ListNode* createNewNode(int x, int y, ListNode* next)
+{
+	ListNode* node = (ListNode*)malloc(sizeof(ListNode));
+
+	node->y = x;
+	node->x = y;
+	node->next = next;
+
+	return node;
+}
+
+void freeList(ListNode* snake)
+{
+	ListNode* next;
+
+	while (snake != NULL)
+	{
+		next = snake->next;
+		free(snake);
+		snake = next;
+	}
+}
