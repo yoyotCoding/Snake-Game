@@ -43,7 +43,7 @@ ListNode* moveSnake(ListNode* snake);
 void updateSnakeDirection(ListNode* snake);
 void printBorders();
 void gameOver();
-void UpdateSnake(ListNode* snake);
+void updateSnake(ListNode* snake);
 
 bool checkBorderCrash(ListNode* snake);
 
@@ -86,11 +86,11 @@ void runGame()
 {
 	printBorders(); //creates board
 
-	ListNode* snake = createNewNode(ROWS / 2 , COLS / 2,  NULL);
+	ListNode* snake = createNewNode(ROWS / 2, COLS / 2, NULL);
 
-	while ( checkBorderCrash(snake) && !selfCrash ) //as long as head of snake hasn't crashed into itself or one of the borders, keep going
+	while (checkBorderCrash(snake) && !selfCrash) //as long as head of snake hasn't crashed into itself or one of the borders, keep going
 	{
-		snake= moveSnake(snake);
+		snake = moveSnake(snake);
 		updateSnakeDirection(snake);
 	}
 	freeList(snake); // clear items from two lists
@@ -103,8 +103,8 @@ void runGame()
 ListNode* moveSnake(ListNode* snake)
 {
 	ListNode* currSnake = snake;
-	int LastY = snake->y;
-	int LastX = snake->x;
+	int lastY = snake->y;
+	int lastX = snake->x;
 
 	while (currSnake != NULL) //as long as you haven't reached the last listNode, print '@'s in the (row,col) locations of the list
 	{
@@ -112,32 +112,32 @@ ListNode* moveSnake(ListNode* snake)
 		printf("@");
 
 		if (currSnake->next == NULL) {
-			LastY = currSnake->y;
-			LastX = currSnake->x;
+			lastY = currSnake->y;
+			lastX = currSnake->x;
 		}
-	
-		
+
+
 		currSnake = currSnake->next; //advance to next snake-listNode
-		
+
 		if (currSnake != NULL && snake->y == currSnake->y && snake->x == currSnake->x) //ends the game if snake crashes into itself
 			selfCrash = true;
 	}
 
 
-	UpdateSnake(snake);
+	updateSnake(snake);
 	gotoxy(ROWS + 1, 0); //moves pointer off the board so movement of snake seems fluid
 	sleep(delay); // delay between movements
-	
+
 	if (moveCount % 5 == 0) //enance speed until delay between snake movements is .1 seconds
 	{
 		if (delay > 0.1)
 			delay -= .03;
 
-		insertNodeToTail(snake, createNewNode(LastY, LastX, NULL));
+		insertNodeToTail(snake, createNewNode(lastY, lastX, NULL));
 	}
 	else
 	{
-		gotoxy(LastY, LastX);
+		gotoxy(lastY, lastX);
 		printf(" "); //prints a space in the place where the tail has just left
 	}
 
@@ -157,17 +157,17 @@ void updateSnakeDirection(ListNode* snake)
 	if (snakeDirection != 'd' && snakeDirection != 'a' && snakeDirection != 'w' && snakeDirection != 's')
 		snakeDirection = previousSnakeDirection; //ignore inputs that aren't 'w','a','s','d'
 
-	if (moveCount >= 5 && 
-		( (snakeDirection == 'd' && previousSnakeDirection == 'a') 
-		|| (snakeDirection == 'a' && previousSnakeDirection == 'd')
-		|| (snakeDirection == 'w' && previousSnakeDirection == 's') 
-		|| (snakeDirection == 's' && previousSnakeDirection =='w') ) )
+	if (moveCount >= 5 &&
+		((snakeDirection == 'd' && previousSnakeDirection == 'a')
+			|| (snakeDirection == 'a' && previousSnakeDirection == 'd')
+			|| (snakeDirection == 'w' && previousSnakeDirection == 's')
+			|| (snakeDirection == 's' && previousSnakeDirection == 'w')))
 
 		snakeDirection = previousSnakeDirection; //once snake is longer than one '@' make sure it doesn't go in reverse and run over itself
 
 	switch (snakeDirection)
 	{
-	case 'd': snake->x ++;
+	case 'd': snake->x++;
 		break;
 	case 'w': snake->y--;
 		break;
@@ -266,12 +266,12 @@ ListNode* InsertNodeToHead(ListNode* snake, ListNode* newsnake) {
 	return newsnake;
 }
 
-void UpdateSnake(ListNode* snake)
+void updateSnake(ListNode* snake)
 {
 	if (snake == NULL || snake->next == NULL)
 		return;
 	else {
-		UpdateSnake(snake->next);
+		updateSnake(snake->next);
 		snake->next->x = snake->x;
 		snake->next->y = snake->y;
 	}
