@@ -88,7 +88,7 @@ void runGame()
 
 	ListNode* snake = createNewNode(ROWS / 2 , COLS / 2,  NULL);
 
-	while ( checkBorderCrash(snake) || selfCrash ) //as long as head of snake hasn't crashed into itself or one of the borders, keep going
+	while ( checkBorderCrash(snake) && !selfCrash ) //as long as head of snake hasn't crashed into itself or one of the borders, keep going
 	{
 		snake= moveSnake(snake);
 		updateSnakeDirection(snake);
@@ -143,8 +143,6 @@ ListNode* moveSnake(ListNode* snake)
 
 	moveCount++;
 
-	gotoxy(ROWS + 1, COLS);
-	printf("lasty is %d\nlast x is %d\n moveCounter:%d", LastY, LastX, moveCount);
 
 	return snake;
 }
